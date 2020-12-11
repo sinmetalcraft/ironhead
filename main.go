@@ -2,16 +2,30 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 
-	"golang.org/x/oauth2/google"
+	"cloud.google.com/go/storage"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 )
 
 func main() {
+	var (
+		cmd = flag.String("cmd", "default", "command")
+	)
+	flag.Parse()
+	fmt.Printf("cmd=%s\n", *cmd)
+
+	if *cmd == "save-token" {
+		fmt.Println("save-token")
+		saveToken()
+		os.Exit(0)
+	}
+
 	watchGmail()
 
 	const addr = ":8080"
@@ -25,20 +39,50 @@ func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello, Ironhead")
 }
 
+func saveToken() {
+	ctx := context.Background()
+
+	gcs, err := storage.NewClient(ctx)
+	if err != nil {
+		log.Fatalf("failed storage.NewClient err=%#v", err)
+	}
+	ts, err := NewTokenService(ctx, "sinmetal-ironhead-config", gcs)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := ts.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	if err := ts.SaveToken(ctx, gmail.GmailMetadataScope); err != nil {
+		panic(err)
+	}
+}
+
 func watchGmail() {
 	ctx := context.Background()
 
-	clientSecret, err := getCredentialFile(ctx)
+	gcs, err := storage.NewClient(ctx)
 	if err != nil {
-		log.Fatalf("failed getCredentialFile err=%#v", err)
+		log.Fatalf("failed storage.NewClient err=%#v", err)
+	}
+	ts, err := NewTokenService(ctx, "sinmetal-ironhead-config", gcs)
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		if err := ts.Close(); err != nil {
+			panic(err)
+		}
+	}()
+
+	client, err := ts.CreateHTTPClient(ctx, gmail.GmailMetadataScope)
+	if err != nil {
+		panic(err)
 	}
 
-	config, err := google.ConfigFromJSON(clientSecret, gmail.GmailMetadataScope)
-	if err != nil {
-		log.Fatalf("failed google.ConfigFromJSON err=%#v", err)
-	}
-
-	client := getClient(config)
 	gmailService, err := gmail.NewService(ctx, option.WithHTTPClient(client))
 	if err != nil {
 		log.Fatalf("failed gmail.NewService err=%+v", err)
