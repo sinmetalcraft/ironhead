@@ -31,6 +31,7 @@ func main() {
 	const addr = ":8080"
 	fmt.Printf("Start Listen %s", addr)
 
+	http.HandleFunc("/notify/gmail", GmailNotifyPubSubHandler)
 	http.HandleFunc("/", helloWorldHandler)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
