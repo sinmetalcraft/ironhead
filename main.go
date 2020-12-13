@@ -29,7 +29,7 @@ func main() {
 	watchGmail()
 
 	const addr = ":8080"
-	fmt.Printf("Start Listen %s", addr)
+	fmt.Printf("Start Listen %s\n", addr)
 
 	http.HandleFunc("/notify/gmail", GmailNotifyPubSubHandler)
 	http.HandleFunc("/", helloWorldHandler)
@@ -37,6 +37,7 @@ func main() {
 }
 
 func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Hello, Ironhead")
 	fmt.Fprintf(w, "Hello, Ironhead")
 }
 
