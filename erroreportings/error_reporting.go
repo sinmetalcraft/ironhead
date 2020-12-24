@@ -1,6 +1,7 @@
 package erroreportings
 
 import (
+	"regexp"
 	"strings"
 
 	ironstrings "github.com/sinmetalcraft/ironhead/strings"
@@ -14,11 +15,17 @@ type Info struct {
 	ErrorDetailURL string
 }
 
+var consoleURLReg *regexp.Regexp
+
+func init() {
+	consoleURLReg = regexp.MustCompile(`https://console.cloud.google.com/errors/.*"`)
+}
+
 // Parse is ErrorReportingから送れてきたメールからぱっと必要な情報を抜き出す
 // 引数にはErrorReportingのメールのplainTextを渡す
-func Parse(text string) *Info {
+func Parse(plainText string, html string) *Info {
 	info := &Info{}
-	pID, next := readProjectID(text)
+	pID, next := readProjectID(plainText)
 	info.ProjectID = pID
 
 	service, next := readService(next)
@@ -26,6 +33,9 @@ func Parse(text string) *Info {
 
 	version, _ := readVersion(next)
 	info.Version = version
+
+	consoleURL := readConsoleURL(html)
+	info.ErrorDetailURL = consoleURL
 
 	return info
 }
@@ -69,4 +79,16 @@ func readLabelText(label string, text string) (string, string) {
 			return "", ""
 		}
 	}
+}
+
+func readConsoleURL(text string) string {
+	v := consoleURLReg.FindString(text)
+	var buf strings.Builder
+	for _, c := range v {
+		if string(c) == "\"" {
+			return buf.String()
+		}
+		buf.WriteRune(c)
+	}
+	return buf.String()
 }
