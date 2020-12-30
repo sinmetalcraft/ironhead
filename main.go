@@ -13,6 +13,13 @@ import (
 	"google.golang.org/api/option"
 )
 
+const (
+	userID                   = "sinmetal@sinmetalcraft.jp"
+	tbfErrorReportingLabelID = "Label_6698128523804588152"
+)
+
+var gmailService *GmailService
+
 func main() {
 	var (
 		cmd = flag.String("cmd", "default", "command")
@@ -26,12 +33,15 @@ func main() {
 		os.Exit(0)
 	}
 
-	watchGmail()
+	ctx := context.Background()
+
+	gmailService = newGmailService(ctx)
 
 	const addr = ":8080"
 	fmt.Printf("Start Listen %s\n", addr)
 
 	http.HandleFunc("/notify/gmail", GmailNotifyPubSubHandler)
+	http.HandleFunc("/gmail/watch", GmailWatchHandler)
 	http.HandleFunc("/", helloWorldHandler)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
@@ -58,14 +68,12 @@ func saveToken() {
 		}
 	}()
 
-	if err := ts.SaveToken(ctx, gmail.GmailMetadataScope); err != nil {
+	if err := ts.SaveToken(ctx, GmailServiceScope...); err != nil {
 		panic(err)
 	}
 }
 
-func watchGmail() {
-	ctx := context.Background()
-
+func newGmailService(ctx context.Context) *GmailService {
 	gcs, err := storage.NewClient(ctx)
 	if err != nil {
 		log.Fatalf("failed storage.NewClient err=%#v", err)
@@ -80,7 +88,7 @@ func watchGmail() {
 		}
 	}()
 
-	client, err := ts.CreateHTTPClient(ctx, gmail.GmailMetadataScope)
+	client, err := ts.CreateHTTPClient(ctx, GmailServiceScope...)
 	if err != nil {
 		panic(err)
 	}
@@ -94,13 +102,5 @@ func watchGmail() {
 	if err != nil {
 		log.Fatalf("failed NewGmailService err=%+v", err)
 	}
-
-	resp, err := s.Watch(ctx, "sinmetal@sinmetalcraft.jp", &gmail.WatchRequest{
-		TopicName: "projects/sinmetal-ironhead/topics/gmail",
-		LabelIds:  []string{"Label_6698128523804588152"},
-	})
-	if err != nil {
-		log.Fatalf("failed Watch err=%+v", err)
-	}
-	fmt.Printf("%#v", resp)
+	return s
 }
