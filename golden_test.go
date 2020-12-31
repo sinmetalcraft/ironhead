@@ -14,7 +14,7 @@ const goldenBucket = "sinmetal-ironhead-golden"
 func TestCreateGolden(t *testing.T) {
 	ctx := context.Background()
 
-	s := newGmailService(t)
+	s := newGmailService(ctx)
 
 	const userID = "sinmetal@sinmetalcraft.jp"
 	const startHistoryID = 12158234

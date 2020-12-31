@@ -50,7 +50,7 @@ func (s *GmailService) Watch(ctx context.Context, userID string, req *gmail.Watc
 func (s *GmailService) GetMessage(ctx context.Context, userID string, startHistoryID int64, labelID string) (*gmail.Message, error) {
 	res, err := s.gus.History.List(userID).StartHistoryId(uint64(startHistoryID)).LabelId(labelID).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("failed GmailUserService.Watch.userID=%s,req=%#v : %w", userID, err)
+		return nil, fmt.Errorf("failed GmailUserService.Watch.userID=%s : %w", userID, err)
 	}
 
 	if len(res.History) < 1 {
@@ -62,7 +62,7 @@ func (s *GmailService) GetMessage(ctx context.Context, userID string, startHisto
 
 	msg, err := s.gus.Messages.Get(userID, res.History[0].Messages[0].Id).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s,req=%#v : %w", userID, err)
+		return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
 	}
 	return msg, nil
 }
@@ -83,14 +83,14 @@ func (s *GmailService) GetErrorReportingInfo(ctx context.Context, userID string,
 	if msg.Payload.Parts[0].MimeType == "text/plain" {
 		plainText, err = base64.URLEncoding.DecodeString(msg.Payload.Parts[0].Body.Data)
 		if err != nil {
-			return nil, fmt.Errorf("invalid error reporting mail format")
+			return nil, fmt.Errorf("invalid error reporting mail format.%s", msg.Payload.Parts[0].Body.Data)
 		}
 	}
 
 	if msg.Payload.Parts[1].MimeType == "text/html" {
 		htmlText, err = base64.URLEncoding.DecodeString(msg.Payload.Parts[1].Body.Data)
 		if err != nil {
-			return nil, fmt.Errorf("invalid error reporting mail format")
+			return nil, fmt.Errorf("invalid error reporting mail format.%s", msg.Payload.Parts[1].Body.Data)
 		}
 	}
 
