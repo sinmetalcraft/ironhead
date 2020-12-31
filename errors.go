@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"golang.org/x/xerrors"
@@ -26,7 +27,11 @@ func (e *Error) Error() string {
 	if e.KV == nil || len(e.KV) < 1 {
 		return fmt.Sprintf("%s: %s: %s", e.Code, e.Message, e.err)
 	}
-	return fmt.Sprintf("%s: %s: attribute:%+v :%s", e.Code, e.Message, e.KV, e.err)
+	kv, err := json.Marshal(e.KV)
+	if err != nil {
+		return fmt.Sprintf("%s: %s: attribute:%+v :%s", e.Code, e.Message, e.KV, e.err)
+	}
+	return fmt.Sprintf("%s: %s: attribute:%s :%s", e.Code, e.Message, kv, e.err)
 }
 
 // Is is err equal check
