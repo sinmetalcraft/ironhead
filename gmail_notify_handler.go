@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	"golang.org/x/xerrors"
 )
 
 // PubSubMessage is the payload of a Pub/Sub event.
@@ -48,7 +50,11 @@ func GmailNotifyPubSubHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	info, err := gmailService.GetErrorReportingInfo(ctx, d.EmailAddress, d.HistoryID, tbfErrorReportingLabelID)
-	if err != nil {
+	if xerrors.Is(err, ErrInvalidMessage) {
+		log.Printf("invalid gmail history: %+v, %v\n", d, err)
+		w.WriteHeader(http.StatusOK) // Retryしても完了しないので、諦めて終わる
+		return
+	} else if err != nil {
 		log.Printf("gmailService.GetErrorReportingInfo: %v\n", err)
 		http.Error(w, "InternalServerError", http.StatusInternalServerError)
 		return

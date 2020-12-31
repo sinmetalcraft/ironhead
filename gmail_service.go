@@ -54,10 +54,10 @@ func (s *GmailService) GetMessage(ctx context.Context, userID string, startHisto
 	}
 
 	if len(res.History) < 1 {
-		return nil, fmt.Errorf("invalid History List. %+v", res)
+		return nil, newErrInvalidMessage("invalid gmail.history.list", map[string]interface{}{"history": res}, nil)
 	}
 	if len(res.History[0].Messages) < 1 {
-		return nil, fmt.Errorf("invalid History Messages. %+v", res.History[0])
+		return nil, newErrInvalidMessage("invalid gmail.history.message", map[string]interface{}{"history.message": res.History[0]}, nil)
 	}
 
 	msg, err := s.gus.Messages.Get(userID, res.History[0].Messages[0].Id).Context(ctx).Do()
@@ -75,7 +75,7 @@ func (s *GmailService) GetErrorReportingInfo(ctx context.Context, userID string,
 	}
 
 	if len(msg.Payload.Parts) < 2 {
-		return nil, fmt.Errorf("invalid error reporting mail format.%+v", msg.Payload)
+		return nil, newErrInvalidMessage("invalid error reporting mail format", map[string]interface{}{"payload": msg.Payload}, nil)
 	}
 
 	var plainText []byte
