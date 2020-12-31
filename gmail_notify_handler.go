@@ -30,26 +30,26 @@ func GmailNotifyPubSubHandler(w http.ResponseWriter, r *http.Request) {
 	var m PubSubMessage
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("ioutil.ReadAll: %v", err)
+		log.Printf("ioutil.ReadAll: %v\n", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 	if err := json.Unmarshal(body, &m); err != nil {
-		log.Printf("json.Unmarshal: %v", err)
+		log.Printf("json.Unmarshal: %v\n", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
 	var d NotifyData
 	if err := json.Unmarshal(m.Message.Data, &d); err != nil {
-		log.Printf("json.Unmarshal: %v", err)
+		log.Printf("json.Unmarshal: %v\n", err)
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
 	info, err := gmailService.GetErrorReportingInfo(ctx, d.EmailAddress, d.HistoryID, tbfErrorReportingLabelID)
 	if err != nil {
-		log.Printf("gmailService.GetErrorReportingInfo: %v", err)
+		log.Printf("gmailService.GetErrorReportingInfo: %v\n", err)
 		http.Error(w, "InternalServerError", http.StatusInternalServerError)
 		return
 	}
