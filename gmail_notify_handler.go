@@ -22,7 +22,7 @@ type PubSubMessage struct {
 // NotifyData is Gmail Notify で飛んでくる中身
 type NotifyData struct {
 	EmailAddress string `json:"emailAddress"`
-	HistoryID    int64  `json:"historyId"`
+	HistoryID    uint64 `json:"historyId"`
 }
 
 // GmailNotifyPubSubHandler receives and processes a Pub/Sub push message.

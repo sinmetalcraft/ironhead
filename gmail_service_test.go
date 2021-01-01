@@ -38,7 +38,7 @@ func TestGmailService_GetMessage(t *testing.T) {
 	ctx := context.Background()
 
 	s := newGmailService(ctx)
-	msg, err := s.GetMessage(ctx, "sinmetal@sinmetalcraft.jp", 12158234, "Label_6698128523804588152")
+	msg, err := s.GetMessage(ctx, "sinmetal@sinmetalcraft.jp", 12158234, tbfErrorReportingLabelID)
 	if err != nil {
 		t.Fatal(err)
 	}

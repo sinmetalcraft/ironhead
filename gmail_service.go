@@ -47,8 +47,8 @@ func (s *GmailService) Watch(ctx context.Context, userID string, req *gmail.Watc
 }
 
 // GetMessage is historyIDから1件のメール・メッセージを取得する
-func (s *GmailService) GetMessage(ctx context.Context, userID string, startHistoryID int64, labelID string) (*gmail.Message, error) {
-	res, err := s.gus.History.List(userID).StartHistoryId(uint64(startHistoryID)).LabelId(labelID).Context(ctx).Do()
+func (s *GmailService) GetMessage(ctx context.Context, userID string, startHistoryID uint64, labelID string) (*gmail.Message, error) {
+	res, err := s.gus.History.List(userID).StartHistoryId(startHistoryID).LabelId(labelID).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed GmailUserService.Watch.userID=%s : %w", userID, err)
 	}
@@ -68,7 +68,7 @@ func (s *GmailService) GetMessage(ctx context.Context, userID string, startHisto
 }
 
 // GetErrorReportingInfo is startHistoryIDがErrorReportingのIDだと信じてGetする
-func (s *GmailService) GetErrorReportingInfo(ctx context.Context, userID string, startHistoryID int64, labelID string) (*erroreportings.Info, error) {
+func (s *GmailService) GetErrorReportingInfo(ctx context.Context, userID string, startHistoryID uint64, labelID string) (*erroreportings.Info, error) {
 	msg, err := s.GetMessage(ctx, userID, startHistoryID, labelID)
 	if err != nil {
 		return nil, err
