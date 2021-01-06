@@ -49,57 +49,26 @@ func (s *GmailService) Watch(ctx context.Context, userID string, req *gmail.Watc
 }
 
 // GetMessage is historyIDから1件のメール・メッセージを取得する
-func (s *GmailService) GetMessage(ctx context.Context, userID string, startHistoryID uint64, labelID string) (*gmail.Message, error) {
-	res, err := s.gus.History.List(userID).StartHistoryId(startHistoryID).LabelId(labelID).Context(ctx).Do()
+func (s *GmailService) GetMessage(ctx context.Context, userID string, messageID string) (*gmail.Message, error) {
+	msg, err := s.gus.Messages.Get(userID, messageID).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("failed GmailUserService.Watch.userID=%s : %w", userID, err)
-	}
-
-	if len(res.History) < 1 {
-		return nil, newErrInvalidMessage("invalid gmail.history.list", map[string]interface{}{"history": res}, nil)
-	}
-	if len(res.History[0].Messages) < 1 {
-		return nil, newErrInvalidMessage("invalid gmail.history.message", map[string]interface{}{"history.message": res.History[0]}, nil)
-	}
-
-	msg, err := s.gus.Messages.Get(userID, res.History[0].Messages[0].Id).Context(ctx).Do()
-	if err != nil {
-		return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
+		return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s,messageID=%s : %w", userID, messageID, err)
 	}
 	return msg, nil
 }
 
-// GetMessageList is 指定した historyID以降のmessageを取得する
-func (s *GmailService) GetMessageList(ctx context.Context, userID string, startHistoryID uint64, labelID string) ([]*gmail.Message, error) {
-	res, err := s.gus.History.List(userID).StartHistoryId(startHistoryID).LabelId(labelID).Context(ctx).Do()
+// GetMessageList is 最新のMessage一覧を取得する。Message本体は入っていない。
+func (s *GmailService) GetMessageList(ctx context.Context, userID string, labelID string) ([]*gmail.Message, error) {
+	res, err := s.gus.Messages.List(userID).LabelIds(labelID).Context(ctx).Do()
 	if err != nil {
-		return nil, fmt.Errorf("failed GmailUserService.Watch.userID=%s : %w", userID, err)
+		return nil, fmt.Errorf("failed GmailUserService.Messages.List.userID=%s,labelID=%s : %w", userID, labelID, err)
 	}
 
-	var result []*gmail.Message
-	for _, h := range res.History {
-		for _, m := range h.Messages {
-			msg, err := s.gus.Messages.Get(userID, m.Id).Context(ctx).Do()
-			var gAPI *googleapi.Error
-			if errors.As(err, &gAPI) {
-				if gAPI.Code == 404 {
-					fmt.Printf("message %s is not found\n", m.Id)
-					continue
-					// 404の時はログ出力してスルー
-				} else {
-					return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
-				}
-			} else if err != nil {
-				return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
-			}
-			result = append(result, msg)
-		}
-	}
-	return result, nil
+	return res.Messages, nil
 }
 
-// GetMessageList is 指定した historyID以降のmessageを取得する
-func (s *GmailService) GetMessageList2(ctx context.Context, userID string, labelID string) ([]*gmail.Message, error) {
+// GetMessageListWithDetail is 最新のMessage一覧を取得する。Message本体も含めて取得する
+func (s *GmailService) GetMessageListWithDetail(ctx context.Context, userID string, labelID string) ([]*gmail.Message, error) {
 	res, err := s.gus.Messages.List(userID).LabelIds(labelID).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed GmailUserService.Messages.List.userID=%s : %w", userID, err)
@@ -125,9 +94,9 @@ func (s *GmailService) GetMessageList2(ctx context.Context, userID string, label
 	return result, nil
 }
 
-// GetErrorReportingInfo is startHistoryIDがErrorReportingのIDだと信じてGetする
-func (s *GmailService) GetErrorReportingInfo(ctx context.Context, userID string, startHistoryID uint64, labelID string) (*erroreportings.Info, error) {
-	msg, err := s.GetMessage(ctx, userID, startHistoryID, labelID)
+// GetErrorReportingInfo is messageIDがErrorReportingのIDだと信じてGetする
+func (s *GmailService) GetErrorReportingInfo(ctx context.Context, userID string, messageID string) (*erroreportings.Info, error) {
+	msg, err := s.GetMessage(ctx, userID, messageID)
 	if err != nil {
 		return nil, err
 	}

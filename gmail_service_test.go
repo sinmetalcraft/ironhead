@@ -69,7 +69,7 @@ func TestPubSubPullGitHubDebug(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		got, err := gmailService.GetMessageList(ctx, userID, d.HistoryID, githubNotifyLabelID)
+		got, err := gmailService.GetMessageList(ctx, userID, githubNotifyLabelID)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -89,37 +89,11 @@ func TestGmailService_GetMessageList(t *testing.T) {
 
 	gmailService := newGmailService(ctx)
 
-	got, err := gmailService.GetMessageList(ctx, userID, 12204190, githubNotifyLabelID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, msg := range got {
-		pp.Printf("historyID:%s,msg.historyID:%s,Snippet:%s\n", 12204190, msg.HistoryId, msg.Snippet)
-	}
-}
-
-func TestGmailService_GetMessageList2(t *testing.T) {
-	ctx := context.Background()
-
-	gmailService := newGmailService(ctx)
-
-	got, err := gmailService.GetMessageList2(ctx, userID, githubNotifyLabelID)
+	got, err := gmailService.GetMessageList(ctx, userID, githubNotifyLabelID)
 	if err != nil {
 		t.Fatal(err)
 	}
 	for _, msg := range got {
 		pp.Printf("%s:%s\n", msg.Id, msg.Snippet)
 	}
-}
-
-// 試しにErrorReportingのメッセージを取得してみる
-func TestGmailService_GetMessage(t *testing.T) {
-	ctx := context.Background()
-
-	s := newGmailService(ctx)
-	msg, err := s.GetMessage(ctx, "sinmetal@sinmetalcraft.jp", 12158234, tbfErrorReportingLabelID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	pp.Print(msg)
 }

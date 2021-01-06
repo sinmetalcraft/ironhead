@@ -13,7 +13,7 @@ func GmailWatchHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	resp, err := gmailService.Watch(ctx, userID, &gmail.WatchRequest{
-		TopicName: "projects/sinmetal-ironhead/topics/gmail",
+		TopicName: "projects/sinmetal-ironhead/topics/gmail-tbf-error-reporting",
 		LabelIds:  []string{tbfErrorReportingLabelID},
 	})
 	if err != nil {

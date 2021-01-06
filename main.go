@@ -8,7 +8,9 @@ import (
 	"net/http"
 	"os"
 
+	"cloud.google.com/go/datastore"
 	"cloud.google.com/go/storage"
+	metadatabox "github.com/sinmetalcraft/gcpbox/metadata"
 	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 )
@@ -20,6 +22,7 @@ const (
 )
 
 var gmailService *GmailService
+var messageStore *MessageStore
 
 func main() {
 	var (
@@ -36,12 +39,26 @@ func main() {
 
 	ctx := context.Background()
 
+	projectID, err := metadatabox.ProjectID()
+	if err != nil {
+		panic(err)
+	}
+
 	gmailService = newGmailService(ctx)
+
+	ds, err := datastore.NewClient(ctx, projectID)
+	if err != nil {
+		panic(err)
+	}
+	messageStore, err = NewMessageStore(ctx, ds)
+	if err != nil {
+		panic(err)
+	}
 
 	const addr = ":8080"
 	fmt.Printf("Start Listen %s\n", addr)
 
-	http.HandleFunc("/notify/gmail", GmailNotifyPubSubHandler)
+	http.HandleFunc("/notify/tbf-error-reporting", GmailTBFErrorReportingNotifyPubSubHandler)
 	http.HandleFunc("/gmail/watch", GmailWatchHandler)
 	http.HandleFunc("/", helloWorldHandler)
 	log.Fatal(http.ListenAndServe(addr, nil))
