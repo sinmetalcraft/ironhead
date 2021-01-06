@@ -16,6 +16,7 @@ import (
 const (
 	userID                   = "sinmetal@sinmetalcraft.jp"
 	tbfErrorReportingLabelID = "Label_6698128523804588152"
+	githubNotifyLabelID      = "Label_5448824310377961381"
 )
 
 var gmailService *GmailService

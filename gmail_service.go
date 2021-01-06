@@ -3,10 +3,12 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 
 	"github.com/sinmetalcraft/ironhead/erroreportings"
 	"google.golang.org/api/gmail/v1"
+	"google.golang.org/api/googleapi"
 )
 
 var GmailServiceScope []string
@@ -65,6 +67,62 @@ func (s *GmailService) GetMessage(ctx context.Context, userID string, startHisto
 		return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
 	}
 	return msg, nil
+}
+
+// GetMessageList is 指定した historyID以降のmessageを取得する
+func (s *GmailService) GetMessageList(ctx context.Context, userID string, startHistoryID uint64, labelID string) ([]*gmail.Message, error) {
+	res, err := s.gus.History.List(userID).StartHistoryId(startHistoryID).LabelId(labelID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed GmailUserService.Watch.userID=%s : %w", userID, err)
+	}
+
+	var result []*gmail.Message
+	for _, h := range res.History {
+		for _, m := range h.Messages {
+			msg, err := s.gus.Messages.Get(userID, m.Id).Context(ctx).Do()
+			var gAPI *googleapi.Error
+			if errors.As(err, &gAPI) {
+				if gAPI.Code == 404 {
+					fmt.Printf("message %s is not found\n", m.Id)
+					continue
+					// 404の時はログ出力してスルー
+				} else {
+					return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
+				}
+			} else if err != nil {
+				return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
+			}
+			result = append(result, msg)
+		}
+	}
+	return result, nil
+}
+
+// GetMessageList is 指定した historyID以降のmessageを取得する
+func (s *GmailService) GetMessageList2(ctx context.Context, userID string, labelID string) ([]*gmail.Message, error) {
+	res, err := s.gus.Messages.List(userID).LabelIds(labelID).Context(ctx).Do()
+	if err != nil {
+		return nil, fmt.Errorf("failed GmailUserService.Messages.List.userID=%s : %w", userID, err)
+	}
+
+	var result []*gmail.Message
+	for _, m := range res.Messages {
+		msg, err := s.gus.Messages.Get(userID, m.Id).Context(ctx).Do()
+		var gAPI *googleapi.Error
+		if errors.As(err, &gAPI) {
+			if gAPI.Code == 404 {
+				fmt.Printf("message %s is not found\n", m.Id)
+				continue
+				// 404の時はログ出力してスルー
+			} else {
+				return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
+			}
+		} else if err != nil {
+			return nil, fmt.Errorf("failed GmailUserService.Message.Get.userID=%s : %w", userID, err)
+		}
+		result = append(result, msg)
+	}
+	return result, nil
 }
 
 // GetErrorReportingInfo is startHistoryIDがErrorReportingのIDだと信じてGetする
