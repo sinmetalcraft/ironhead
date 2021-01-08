@@ -43,10 +43,11 @@ func GmailTBFErrorReportingNotifyPubSubHandler(w http.ResponseWriter, r *http.Re
 			log.Printf("messageStore.Get: %v\n", err)
 			http.Error(w, "InternalServerError", http.StatusInternalServerError)
 			return
-		}
-		if v.NotificationCompleteStatus == 1 {
-			// すでに通知済み
-			continue
+		} else {
+			if v.NotificationCompleteStatus == 1 {
+				// すでに通知済み
+				continue
+			}
 		}
 
 		// TODO Notify
@@ -62,7 +63,7 @@ func GmailTBFErrorReportingNotifyPubSubHandler(w http.ResponseWriter, r *http.Re
 		fmt.Printf("%+v", info)
 
 		err = messageStore.Put(ctx, &Message{
-			ID:                         v.ID,
+			ID:                         msg.Id,
 			NotificationCompleteStatus: 1,
 		})
 		if err != nil {
