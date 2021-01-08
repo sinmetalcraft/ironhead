@@ -41,7 +41,7 @@ func (s *MessageStore) Key(id string) *datastore.Key {
 }
 
 func (s *MessageStore) Put(ctx context.Context, model *Message) error {
-	_, err := s.ds.Put(ctx, s.Key(model.ID), &model)
+	_, err := s.ds.Put(ctx, s.Key(model.ID), model)
 	if err != nil {
 		return fmt.Errorf("failed Message.put() model is %+v : %w", model, err)
 	}
