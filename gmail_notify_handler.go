@@ -51,7 +51,7 @@ func GmailTBFErrorReportingNotifyPubSubHandler(w http.ResponseWriter, r *http.Re
 		}
 
 		// TODO Notify
-		info, err := gmailService.GetErrorReportingInfo(ctx, userID, tbfErrorReportingLabelID)
+		info, err := gmailService.GetErrorReportingInfo(ctx, userID, msg.Id)
 		if errors.Is(err, ErrInvalidMessage) {
 			log.Printf("invalid gmail.message: %s, %v\n", msg.Id, err)
 			continue // Retryしても完了しないので、諦める
